@@ -1,8 +1,6 @@
 #summary MyWebFonts Project Name Details
 #labels Featured
 
-= Introduction =
-
 MyWebFonts represents to things :
 
  * A Javascript API, that is installed on remote website (depends on [http://www.prototypejs.org Prototype JS])
