@@ -15,7 +15,8 @@ var MyWebFonts = {
 	options: {
 		// Test for external request
 		//externalSite: "http://mywebfonts.minipoulpe.org/concept"
-		externalSite: ""
+		externalSite: 		"",
+		debug:				true,
 	},
 	
 
@@ -31,14 +32,9 @@ var MyWebFonts = {
 		fontIdentifier = MyWebFonts.parseFontFamily(fontElement.style.fontFamily);
 
 		fontSize = fontElement.style.fontSize;
-		//$("debug").insert("Font Weight : " + $("letters").style.fontWeight + "\n");
 
-		$("debug").insert("[loadFontDatas] Font Identifier : " + fontIdentifier + "\n");
-		//fontIdentifier = fontFamily.replace(/.*('|")('|").*/, "$1");
-		//if (fontFamily.startsWidth("mwf")) {
-		//	var fontIdentifier = ;
-		//}
-		//*/
+		MyWebFonts.debug("[loadFontDatas] Font Identifier : " + fontIdentifier);
+
 		var scriptUrl = MyWebFonts.createFontDatasUrl(fontIdentifier);
 		var script = new Element('script', { "type": "text/javascript", "src": scriptUrl });
 		$$("head").first().appendChild(script);
@@ -47,8 +43,7 @@ var MyWebFonts = {
 	
 	parseFontFamily: function(fontFamily) {
 
-		$("debug").insert("Titi : " + fontFamily + "\n");
-		$("debug").insert("Titi : " + fontFamily + "\n");
+		MyWebFonts.debug("Font Family : " + fontFamily);
 
 		fonts = fontFamily.split(",");
 		if (fonts.length == 0) {
@@ -116,58 +111,74 @@ var MyWebFonts = {
 	    return nodes;
 	},
 	
-	// It's bad and ugly code time
-	process: function(element, letterCoordinates) {
-		if (element == null)
-			return;
-		
-		var child;
-		for (child = element.firstChild; child; child = child.nextSibling) {
-			switch (child.nodeType) {
-				case Node.TEXT_NODE:
-					MyWebFonts.replaceText(child, element, letterCoordinates);
-					break;
-				case Node.ELEMENT_NODE:
-					MyWebFonts.process(child, letterCoordinates);
-					break;
-			}
-		}
-	},
-	
 	triggerSubstitutions: function(letterCoordinates) {
 
 		var textNodes = MyWebFonts.findTextNodes($("letters"));
 		for (var i=0; i < textNodes.length; ++i) {
-			MyWebFonts.replaceText(textNodes[i], textNodes[i].parent, letterCoordinates);
+			
+			MyWebFonts.replaceText(textNodes[i], letterCoordinates);
 		}
 		
 
 	},
 
-	replaceText: function(element, parent, letterCoordinates) {
-		$("debug").insert("Titi : " + element.nodeValue + "\n");
+	replaceText: function(element, letterCoordinates) {
+		var elementContent = element.nodeValue;
+		elementContent = elementContent.strip();
+		if (elementContent == "")
+			return;
+
+		MyWebFonts.debug("Element : " + element.nodeValue + "[type=" + element.nodeType + "]");
 	
-		var letterImages = MyWebFonts.createTextImage(element, letterCoordinates);
+		var parent = element.parentNode;
+		
+		MyWebFonts.debug("Parent : " + parent.nodeName + "[type=" + parent.nodeType + "]");
+		
+		var letterImages = MyWebFonts.createTextImage(element.nodeValue, letterCoordinates);
+		
+		// Simplest and working solution : Create a <span> element which will contains <img> tags that will replace element content
+		// Problem : Add an additional span element, which is normally not needed
+		var substitute = new Element("span");
 		for (var index = 0; index < letterImages.length; ++index) {
-			if (index == 0)
-				parent.replaceChild(letterImages[index], element);
-			else
-				parent.insert(letterImages[index]);
-			//$("debug").insert("Titi : " + letterImages[index] + "\n");
+			var currentElement = letterImages[index];
+			substitute.insert(currentElement);
 		}
+		
+		parent.replaceChild(substitute, element);
+		
+		/*
+		// Harder and non-working solution : First <img> tag replace the element content, and next <img> tags are inserted just after
+		// this first <img> tag. 
+		// Problem : Strange behavior...
+		var previous = null;
+		for (var index = 0; index < letterImages.length; ++index) {
+			var currentElement = letterImages[index];
+			
+			if (index == 0) {
+				$("debug").insert(currentElement.alt  + " replaces " + element.nodeValue + "\n");
+				parent.replaceChild(currentElement, element);
+			}
+			else {
+				$("debug").insert(currentElement.alt + " inserts after " + previous.alt + "\n");
+				parent.insert(currentElement, { after : previous });
+				
+			}
+			
+			previous = currentElement;
+			
+			
+		}
+		*/
 	},
 
 
-	createTextImage: function(element, letterCoordinates) {
-		var word = element.nodeValue;
-	
+	createTextImage: function(word, letterCoordinates) {
 		var letterImages = new Array();
 		for (var index = 0; index < word.length; ++index) {
 			var currentLetter = word[index];
 			var letterCoordinate = letterCoordinates[currentLetter];
 			if (letterCoordinate == null) {
-				//TODO Could be better !
-				//letterImages.push(new Element('span').update(currentLetter));
+				letterImages.push(new Element('span').update(currentLetter));
 				continue;
 			}
 	
@@ -191,6 +202,33 @@ var MyWebFonts = {
 
 		return letterImages;
 	},
+	
+	debug: function(message) {
+		if (MyWebFonts.options.debug==false)
+			return;
+		
+		var debugElement = $("debug");
+		if (debugElement == null) {
+			debugElement = new Element("pre", { id: "debug" } );
+			debugElement.setStyle({
+				fontFamily: 		"monospace",
+				fontSize:			"11px",
+				border:				"1px solid #ccc",
+			});
+			
+			$$("body").last().appendChild(new Element("h2").update("My Web Fonts Debugging:"));
+			$$("body").last().appendChild(debugElement);
+		}
+		
+		var date = new Date();
+		debugElement.insert( 	(date.getHours()<10?'0'+date.getHours():date.getHours()) + ":" + 
+								(date.getMinutes()<10?'0'+date.getMinutes():date.getMinutes()) + ":" + 
+								(date.getSeconds()<10?'0'+date.getSeconds():date.getSeconds()) + " " + 
+								(date.getMilliseconds()<10?'00'+date.getMilliseconds() : date.getMilliseconds()<100?'0'+date.getMilliseconds():date.getMilliseconds()) + "ms" + " : " + 
+								message + "\n"
+		);
+		
+	}
 	
 };
 
