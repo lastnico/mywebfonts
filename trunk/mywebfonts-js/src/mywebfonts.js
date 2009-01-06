@@ -16,23 +16,37 @@ var MyWebFonts = {
 		// Test for external request
 		//externalSite: "http://mywebfonts.minipoulpe.org/concept"
 		externalSite: 		"",
-		debug:				true,
+		debug:				true
 	},
 	
+	foundElements: [],
+	downloadedFonts: [],
 
 	initialize: function() {
 		fontElements = $$(".mywebfonts");
 		for (var index = 0; index < fontElements.length; ++index) {
-			MyWebFonts.loadFontDatas(fontElements[index]);
+			MyWebFonts.addFoundElement(fontElements[index]);
 		}
 
 	},
 
-	loadFontDatas: function(fontElement) {
-		fontIdentifier = MyWebFonts.parseFontFamily(fontElement.style.fontFamily);
-
-		fontSize = fontElement.style.fontSize;
-
+	addFoundElement: function(fontElement) {
+		var fontIdentifier = MyWebFonts.parseFontFamily(fontElement.style.fontFamily);
+		var fontSize = fontElement.style.fontSize;
+		
+		MyWebFonts.foundElements.push({ 
+			element:		fontElement,
+			fontIdentifier:	fontIdentifier,
+			fontSize:		fontSize
+		});
+		
+		MyWebFonts.debug("[addFoundElement] New Element found : " + fontElement);
+		
+		MyWebFonts.loadFontDatas(fontIdentifier);
+	},
+	
+	loadFontDatas: function(fontIdentifier) {
+		// First search if already loaded, or currently loaded
 		MyWebFonts.debug("[loadFontDatas] Font Identifier : " + fontIdentifier);
 
 		var scriptUrl = MyWebFonts.createFontDatasUrl(fontIdentifier);
@@ -84,7 +98,7 @@ var MyWebFonts = {
 		if (arguments.length >= 4)
 			genericUrl += "/c:" + arguments[3];
 		
-		return genericUrl
+		return genericUrl;
 		
 	},
 
@@ -213,7 +227,7 @@ var MyWebFonts = {
 			debugElement.setStyle({
 				fontFamily: 		"monospace",
 				fontSize:			"11px",
-				border:				"1px solid #ccc",
+				border:				"1px solid #ccc"
 			});
 			
 			$$("body").last().appendChild(new Element("h2").update("My Web Fonts Debugging:"));
