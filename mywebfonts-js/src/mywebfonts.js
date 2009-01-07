@@ -14,11 +14,12 @@ var MyWebFonts = {
 	// Configuration
 	options: {
 		// Test for external request
-		//externalSite: "http://mywebfonts.minipoulpe.org/concept"
+		//externalSite: "http://mywebfonts.minipoulpe.org"
 		externalSite: 		"",
 		debug:				true
 	},
 	
+	// Used variables of the current page
 	foundElements: [],
 	availableFonts: [],
 
@@ -69,7 +70,6 @@ var MyWebFonts = {
 	},
 	
 	parseFontFamily: function(fontFamily) {
-
 		MyWebFonts.debug("Font Family : " + fontFamily);
 
 		fonts = fontFamily.split(",");
@@ -117,7 +117,7 @@ var MyWebFonts = {
 		return MyWebFonts.createFontGenericUrl(fontIdentifier, fontVariant, fontSize, fontColor) + "/datas";
 	},
 	
-	triggerSubstitutions: function(fontDatas) {
+	newAvailableFont: function(fontDatas) {
 		MyWebFonts.debug("[triggerSubstitutions] Receive new font datas : " + fontDatas.fontIdentifier);
 		
 		var availableFont = new AvailableFont(fontDatas);
