@@ -150,6 +150,7 @@ var MyWebFonts = {
 	replaceText: function(element, availableFont) {
 		var elementContent = element.nodeValue;
 
+		// TODO Be sure tabs are also stripped 
 		elementContent = elementContent.strip();
 		if (elementContent == "")
 			return;
@@ -160,6 +161,7 @@ var MyWebFonts = {
 		
 		MyWebFonts.debug("Parent : " + parent.nodeName + "[type=" + parent.nodeType + "]");
 		
+		// TODO Separate each words inside a span, and add a "whitespace: no-wrap" to be sure words are not cut in their middle.  
 		var letterImages = MyWebFonts.createTextImage(element.nodeValue, availableFont);
 		
 		// Simplest and working solution : Create a <span> element which will contains <img> tags that will replace element content
