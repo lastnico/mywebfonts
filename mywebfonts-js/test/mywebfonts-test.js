@@ -33,7 +33,7 @@ new Test.Unit.Runner({
 		showTextArray(textNodes);
 
 	},
-	
+
  });
 
 /**

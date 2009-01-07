@@ -1,5 +1,5 @@
 /*  
- * MyWebFonts JavaScript API, version 0.01
+ * MyWebFonts JavaScript API, version 0.2
  * December 16th, 2008
  * (c) 2008-2009 Nicolas Ternisien <nicolas.ternisien@gmail.com>
  *
@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------------- */
 
 var MyWebFonts = {
-	version: '0.01',
+	version: '0.2',
 
 	// Configuration
 	options: {
@@ -20,39 +20,52 @@ var MyWebFonts = {
 	},
 	
 	foundElements: [],
-	downloadedFonts: [],
+	availableFonts: [],
 
 	initialize: function() {
-		fontElements = $$(".mywebfonts");
-		for (var index = 0; index < fontElements.length; ++index) {
-			MyWebFonts.addFoundElement(fontElements[index]);
+		var domElements = $$(".mywebfonts");
+		for (var index = 0; index < domElements.length; ++index) {
+			MyWebFonts.addFoundElement(domElements[index]);
 		}
 
 	},
 
-	addFoundElement: function(fontElement) {
-		var fontIdentifier = MyWebFonts.parseFontFamily(fontElement.style.fontFamily);
-		var fontSize = fontElement.style.fontSize;
+	addFoundElement: function(domElement) {
+		var fontIdentifier = MyWebFonts.parseFontFamily(domElement.style.fontFamily);
+		var fontVariant = null; //TODO
+		var fontSize = MyWebFonts.parseFontSize(domElement.style.fontSize);
+		var fontColor = null; //TODO
 		
-		MyWebFonts.foundElements.push({ 
-			element:		fontElement,
-			fontIdentifier:	fontIdentifier,
-			fontSize:		fontSize
-		});
+		if (fontIdentifier == null) {
+			MyWebFonts.debug("[addFoundElement] Invalid element found : " + domElement + " with " + fontIdentifier);
+			return;
+		}
 		
-		MyWebFonts.debug("[addFoundElement] New Element found : " + fontElement);
+		MyWebFonts.debug("[addFoundElement] New element found : " + domElement + " with " + fontIdentifier);
+		MyWebFonts.foundElements.push(new FoundElement(domElement, fontIdentifier, fontVariant, fontSize, fontColor));
 		
-		MyWebFonts.loadFontDatas(fontIdentifier);
+		// TODO See if font datas already exists
+		
+		// If not, load them, and after receive font datas, the replacement will be triggered
+		MyWebFonts.loadFontDatas(fontIdentifier, fontVariant, fontSize, fontColor);
 	},
 	
-	loadFontDatas: function(fontIdentifier) {
+	loadFontDatas: function(fontIdentifier, fontSize, fontVariant, fontColor) {
 		// First search if already loaded, or currently loaded
 		MyWebFonts.debug("[loadFontDatas] Font Identifier : " + fontIdentifier);
 
-		var scriptUrl = MyWebFonts.createFontDatasUrl(fontIdentifier);
+		var scriptUrl = MyWebFonts.createFontDatasUrl(fontIdentifier, fontSize, fontVariant, fontColor);
 		var script = new Element('script', { "type": "text/javascript", "src": scriptUrl });
 		$$("head").first().appendChild(script);
 
+	},
+	
+	parseFontSize: function(fontSize) {
+		if (fontSize.empty() == true)
+			return null;
+		
+		if (fontSize.endsWith("px"))
+			return fontSize.replace(/px/g, "");
 	},
 	
 	parseFontFamily: function(fontFamily) {
@@ -82,62 +95,61 @@ var MyWebFonts = {
 		return null;
 	},
 
-	
-	// Optional parameters are fontIdentifier, fontVariant, fontSize, fontColor
-	createFontGenericUrl: function() {
+
+	createFontGenericUrl: function(fontIdentifier, fontVariant, fontSize, fontColor) {
 		genericUrl = MyWebFonts.options.externalSite;
-		if (arguments.length >= 1)
-			genericUrl += "/font/" + arguments[0];
+		genericUrl += "/font/" + arguments[0];
 		
-		if (arguments.length >= 2) 
+		if (fontVariant != null) 
 			genericUrl += "/v:" + arguments[1];
 		
-		if (arguments.length >= 3)
+		if (fontSize != null)
 			genericUrl += "/" + arguments[2] + "px";
 		
-		if (arguments.length >= 4)
+		if (fontColor != null)
 			genericUrl += "/c:" + arguments[3];
 		
 		return genericUrl;
 		
 	},
 
-	createFontDatasUrl: function() {
-		return MyWebFonts.createFontGenericUrl($A(arguments)) + "/datas";
-	},
-
-	createFontContentUrl: function() {
-		return MyWebFonts.createFontGenericUrl($A(arguments)) + "/content";
-	},
-
-	findTextNodes: function(element) {
-	    var nodes = [];
-
-	    (function(currentElement) {
-	        //if (!currentElement) return;
-	        if ((currentElement.nodeType == 3))
-	        	nodes.push(currentElement);
-	        else
-	            for (var i=0; i < currentElement.childNodes.length; ++i)
-	                arguments.callee(currentElement.childNodes[i]);
-	    })(element);
-	    
-	    return nodes;
+	createFontDatasUrl: function(fontIdentifier, fontVariant, fontSize, fontColor) {
+		return MyWebFonts.createFontGenericUrl(fontIdentifier, fontVariant, fontSize, fontColor) + "/datas";
 	},
 	
-	triggerSubstitutions: function(letterCoordinates) {
-
-		var textNodes = MyWebFonts.findTextNodes($("letters"));
-		for (var i=0; i < textNodes.length; ++i) {
+	triggerSubstitutions: function(fontDatas) {
+		MyWebFonts.debug("[triggerSubstitutions] Receive new font datas : " + fontDatas.fontIdentifier);
+		
+		var availableFont = new AvailableFont(fontDatas);
+		MyWebFonts.availableFonts.push(availableFont);
+		
+		for (var foundElementIndex = 0; foundElementIndex < MyWebFonts.foundElements.length; ++foundElementIndex) {
+			var foundElement = MyWebFonts.foundElements[foundElementIndex];
 			
-			MyWebFonts.replaceText(textNodes[i], letterCoordinates);
+			// If the foundElement does not match fondDatas content, then ignore it
+			if (foundElement.isRequestedFont(availableFont) == false) {
+				continue;
+			}
+			
+			MyWebFonts.debug("Replacing element : " + foundElement.domElement);
+			var textNodes = foundElement.findTextNodes();
+			for (var i=0; i < textNodes.length; ++i) {
+				MyWebFonts.replaceText(textNodes[i], availableFont);
+			}
+			
+			// TODO Check if it works !
+			// Remove element from list of pending elements
+			MyWebFonts.foundElements.splice(foundElementIndex, 1);
+			foundElementIndex--;
+
 		}
 		
 
 	},
-
-	replaceText: function(element, letterCoordinates) {
+	
+	replaceText: function(element, availableFont) {
 		var elementContent = element.nodeValue;
+
 		elementContent = elementContent.strip();
 		if (elementContent == "")
 			return;
@@ -148,7 +160,7 @@ var MyWebFonts = {
 		
 		MyWebFonts.debug("Parent : " + parent.nodeName + "[type=" + parent.nodeType + "]");
 		
-		var letterImages = MyWebFonts.createTextImage(element.nodeValue, letterCoordinates);
+		var letterImages = MyWebFonts.createTextImage(element.nodeValue, availableFont);
 		
 		// Simplest and working solution : Create a <span> element which will contains <img> tags that will replace element content
 		// Problem : Add an additional span element, which is normally not needed
@@ -186,31 +198,30 @@ var MyWebFonts = {
 	},
 
 
-	createTextImage: function(word, letterCoordinates) {
+	createTextImage: function(word, availableFont) {
 		var letterImages = new Array();
+		var coordinates = availableFont.coordinates;
 		for (var index = 0; index < word.length; ++index) {
 			var currentLetter = word[index];
-			var letterCoordinate = letterCoordinates[currentLetter];
+			var letterCoordinate = coordinates[currentLetter];
 			if (letterCoordinate == null) {
 				letterImages.push(new Element('span').update(currentLetter));
 				continue;
 			}
 	
 
-			var fontIdentifier = "rough-typewriter";
-			var imageUrl = MyWebFonts.createFontContentUrl(fontIdentifier);
+			var imageUrl = MyWebFonts.options.externalSite + availableFont.contentImagePath;
 			var backgroundParameter = (-letterCoordinate.x) + "px " + (-letterCoordinate.y) + "px url(" + imageUrl + ")";
 	
-			var image = new Element('img', { src: MyWebFonts.options.externalSite + "/images/transparent.png", alt: currentLetter });
+			var image = new Element('img', { src: MyWebFonts.options.externalSite + availableFont.transparencyImagePath, alt: currentLetter });
 			image.setStyle({
 				background: 			backgroundParameter,
 				width:					letterCoordinate.width + "px",
 				height:					letterCoordinate.height + "px",
-				padding:				"0px"
-				
+				padding:				"0px",
+				border:					"none" // Replace this to debug easily : "1px solid red"
 			});
-			//, border:					"1px solid red",
-			
+		
 			letterImages.push(image);
 		}
 
@@ -246,7 +257,74 @@ var MyWebFonts = {
 	
 };
 
+var AvailableFont = Class.create({
+	initialize: function(fontDatas) {
+		this.contentImagePath = fontDatas.contentImagePath;
+		this.transparencyImagePath = fontDatas.transparencyImagePath;
+		
+		this.fontIdentifier = fontDatas.fontIdentifier;
+		this.fontVariant = fontDatas.fontVariant;
+		this.fontSize = fontDatas.fontSize;
+		this.fontColor = fontDatas.fontColor;
+
+		this.coordinates = fontDatas.coordinates;
+	}
+
+});
+
+var FoundElement = Class.create({
+	initialize: function(domElement, fontIdentifier, fontVariant, fontSize, fontColor) {
+		this.domElement = domElement;
+		this.fontIdentifier = fontIdentifier;
+		this.fontVariant = fontVariant;
+		this.fontSize = fontSize;
+		this.fontColor = fontColor;
+	},
+
+	isRequestedFont: function(availableFont) {
+		if (this.fontIdentifier != availableFont.fontIdentifier) {
+			MyWebFonts.debug("Not same fontIdentifier : " + this.fontIdentifier + " != " + availableFont.fontIdentifier);
+			return false;
+		}
+		
+		if (this.fontVariant != availableFont.fontVariant) {
+			MyWebFonts.debug(this.fontIdentifier + " : Not same fontVariant : " + this.fontVariant + " != " + availableFont.fontVariant);
+			return false;
+		}
+		
+		if (this.fontSize != availableFont.fontSize) {
+			MyWebFonts.debug(this.fontIdentifier + " : Not same fontSize : " + this.fontSize + " != " + availableFont.fontSize);
+			return false;
+		}
+		
+		if (this.fontColor != availableFont.fontColor) {
+			MyWebFonts.debug(this.fontIdentifier + " : Not same fontColor : " + this.fontColor + " != " + availableFont.fontColor);
+			return false;
+		}
+		
+		MyWebFonts.debug(this.fontIdentifier + " : Correct font found.");
+		return true;
+	},
+	
+
+	findTextNodes: function() {
+	    var nodes = [];
+
+	    (function(currentElement) {
+	        //if (!currentElement) return;
+	        if ((currentElement.nodeType == 3))
+	        	nodes.push(currentElement);
+	        else
+	            for (var i=0; i < currentElement.childNodes.length; ++i)
+	                arguments.callee(currentElement.childNodes[i]);
+	    })(this.domElement);
+	    
+	    return nodes;
+	}
+
+});
+
 document.observe("dom:loaded", function() {
-  // Initialize MyWebFonts
-  MyWebFonts.initialize();
+	// Initialize MyWebFonts
+	MyWebFonts.initialize();
 });
