@@ -65,13 +65,12 @@ var MyWebFonts = {
 		if (fontSize.empty() == true)
 			return null;
 		
+		//TODO Improve this pattern and test
 		if (fontSize.endsWith("px"))
-			return fontSize.replace(/px/g, "");
+			return fontSize.replace(/px\s*/g, "");
 	},
 	
 	parseFontFamily: function(fontFamily) {
-		MyWebFonts.debug("Font Family : " + fontFamily);
-
 		fonts = fontFamily.split(",");
 		if (fonts.length == 0) {
 			fonts = new Array();
@@ -96,7 +95,7 @@ var MyWebFonts = {
 	},
 
 
-	createFontGenericUrl: function(fontIdentifier, fontVariant, fontSize, fontColor) {
+	createFontDatasUrl: function(fontIdentifier, fontVariant, fontSize, fontColor) {
 		genericUrl = MyWebFonts.options.externalSite;
 		genericUrl += "/font/" + arguments[0];
 		
@@ -109,12 +108,8 @@ var MyWebFonts = {
 		if (fontColor != null)
 			genericUrl += "/c:" + arguments[3];
 		
-		return genericUrl;
+		return genericUrl + "/datas";
 		
-	},
-
-	createFontDatasUrl: function(fontIdentifier, fontVariant, fontSize, fontColor) {
-		return MyWebFonts.createFontGenericUrl(fontIdentifier, fontVariant, fontSize, fontColor) + "/datas";
 	},
 	
 	newAvailableFont: function(fontDatas) {
