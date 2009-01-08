@@ -235,10 +235,21 @@ var MyWebFonts = {
 			debugElement.setStyle({
 				fontFamily: 		"monospace",
 				fontSize:			"11px",
-				border:				"1px solid #ccc"
+				border:				"1px solid #E6DB55",
+				background:			"#FFFFCC none repeat scroll 0 0",
+				color:				"#252111",
+				padding:			"0px 0px 5px"
 			});
 			
-			$$("body").last().appendChild(new Element("h2").update("My Web Fonts Debugging:"));
+			var debugTitle = new Element("h2").update("My Web Fonts Debugging:");
+			debugTitle.setStyle({
+				fontFamily: 		"monospace",
+				fontSize:			"14px",
+				padding:			"0px",
+				border:				"0"
+			});
+			
+			debugElement.appendChild(debugTitle);
 			$$("body").last().appendChild(debugElement);
 		}
 		
