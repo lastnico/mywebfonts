@@ -41,9 +41,26 @@ new Test.Unit.Runner({
 	},
 
 	testParseFontSize: function() {
-		this.assertEqual("20", MyWebFonts.parseFontFamily(' 20px'));
-		this.assertEqual("20", MyWebFonts.parseFontFamily('     20px	'));
-		this.assertEqual("20", MyWebFonts.parseFontFamily('     20px	'));
+		this.assertEqual("20", MyWebFonts.parseFontSize(' 20px'));
+		this.assertEqual("20", MyWebFonts.parseFontSize(' 20.3px')); // A trap ;-)
+		this.assertEqual("21", MyWebFonts.parseFontSize(' 20.8px')); // Another trap ;-)
+		this.assertEqual("20", MyWebFonts.parseFontSize('     20px	'));
+		this.assertEqual("30", MyWebFonts.parseFontSize('     30px	'));
+		this.assertEqual("8", MyWebFonts.parseFontSize('			xx-small		'));
+		this.assertEqual("10", MyWebFonts.parseFontSize('		   x-small		'));
+		this.assertEqual("12", MyWebFonts.parseFontSize('			small		'));
+		this.assertEqual("14", MyWebFonts.parseFontSize('		   	medium		'));
+		this.assertEqual("16", MyWebFonts.parseFontSize('			large		'));
+		this.assertEqual("18", MyWebFonts.parseFontSize('			x-large		'));
+		this.assertEqual("20", MyWebFonts.parseFontSize('xx-large'));
+		this.assertEqual("16", MyWebFonts.parseFontSize('1em'));
+		this.assertEqual("19", MyWebFonts.parseFontSize('1.2em')); //Pixels size are always rounded
+		this.assertEqual("3", MyWebFonts.parseFontSize('2pt')); //Pixels size are always rounded
+		this.assertEqual("4", MyWebFonts.parseFontSize('3pt'));
+	},
+
+	testParseFontColor: function() {
+		this.assertEqual("eeff55", MyWebFonts.parseFontColor(' #eeff55'));
 	},
 	
 	testAddFoundElement: function() {
