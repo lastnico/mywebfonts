@@ -61,6 +61,9 @@ new Test.Unit.Runner({
 
 	testParseFontColor: function() {
 		this.assertEqual("eeff55", MyWebFonts.parseFontColor(' #eeff55'));
+		this.assertEqual("0c0d0e", MyWebFonts.parseFontColor('rgb(12,13,14)'));
+		this.assertEqual("0c0d0e", MyWebFonts.parseFontColor('rgb		( 12	 , 13 ,	 14)'));
+		this.assertEqual("0000ff", MyWebFonts.parseFontColor('blue'));
 	},
 	
 	testAddFoundElement: function() {
