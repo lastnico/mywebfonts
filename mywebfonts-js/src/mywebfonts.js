@@ -39,7 +39,7 @@ var MyWebFonts = {
 		// Displays a MyWebFonts debug block
 		debug:				true,
 		// Display by default the MyWebFonts debug block
-		showDebugBlock:		true
+		showDebugBlock:		false
 	},
 	
 	// Found Elements of the current page
@@ -365,49 +365,47 @@ var MyWebFonts = {
 		if (MyWebFonts.options.debug==false)
 			return;
 		
-		var debugElement = $("mywebfonts-debug");
-		if (debugElement == null) {
-			mainDebugElement = new Element("div");
-			mainDebugElement.setStyle({
+		var debugLogElement = $("mywebfonts-debug-log");
+		// If this element does not exist, initialize Debug block
+		if (debugLogElement == null) {
+			debugElement = new Element("div", { "id" : "mywebfonts-debug" });
+			debugElement.setStyle({
 				border:				"1px solid #E6DB55",
 				background:			"#FFFFCC none repeat scroll 0 0",
 				color:				"#252111",
-				padding:			"0px 0px 5px"
+				position:			"fixed",
+				bottom:				"0px",
+				left:				"0px",
+				right:				"0px",
+				height:				"20px",
+				overflow:			"normal",
+				padding:			"1px 10px 1px 10px",
+				margin:				"0px auto 0px auto"
 			});
 			
-			debugElement = new Element("pre", { id: "mywebfonts-debug" } );
-			if (MyWebFonts.options.showDebugBlock == true) {
-				debugElement.setStyle({
-					fontFamily: 		"monospace",
-					fontSize:			"11px"
-				});
-			}
-			else {
-				debugElement.setStyle({
-					fontFamily: 		"monospace",
-					fontSize:			"11px",
-					display:			"none"
-				});
-			}
+			debugLogElement = new Element("pre", { id: "mywebfonts-debug-log" } );
+			debugLogElement.setStyle({
+				fontFamily: 		"monospace",
+				fontSize:			"11px",
+				margin:				"0",
+				display:			"none"
+			});
 			
-			var actionAttributes = { 
-				"onclick" : "javascript:$('mywebfonts-debug').toggle();", 
-				"title" : "Click here to have more details about MyWebFonts debugging"
-			};
-			
-			var debugTitle = new Element("h2", actionAttributes).update("My Web Fonts Debug Log");
+			var debugTitle = new Element("h2", { "title" : "Click here to have more details about MyWebFonts debugging" }).update("My Web Fonts Debug Log");
 			debugTitle.setStyle({
 				fontFamily: 		"monospace",
-				fontSize:			"14px",
-				padding:			"0px",
+				fontSize:			"12px",
+				padding:			"0px 0px 10px 0px",
 				color:				"#BA6912",
 				border:				"0",
-				cursor:				"pointer"
+				cursor:				"pointer",
+				margin:				"0"
 			});
+			debugTitle.observe('click', MyWebFonts.toggleDebug);
 			
-			var debugShowDetails = new Element("span", actionAttributes).update("Show Details");
-			debugShowDetails.setStyle({
-				float:				"right",
+			var debugToggleLog = new Element("span", { "id" : "mywebfonts-toggle-debug", "title" : "Click here to have more details about MyWebFonts debugging" }).update("» Show Details");
+			debugToggleLog.setStyle({
+				"float":			"right",
 				fontSize:			"12px",
 				padding:			"0px",
 				fontWeight:			"bold",
@@ -415,26 +413,57 @@ var MyWebFonts = {
 				border:				"0",
 				cursor:				"pointer"
 			});
+			debugToggleLog.observe('click', MyWebFonts.toggleDebug);
 
-			//TODO Add onclick event to $("debug").toggle();
-			//debugShowDetails.
-			mainDebugElement.appendChild(debugShowDetails);
 			
-			mainDebugElement.appendChild(debugTitle);
-			mainDebugElement.appendChild(debugElement);
+			debugElement.appendChild(debugToggleLog);
+			debugElement.appendChild(debugTitle);
+			debugElement.appendChild(debugLogElement);
 			
-			$$("body").last().appendChild(mainDebugElement);
+			$$("body").last().appendChild(debugElement);
+			
+			// By default, debug block is built in "hidden" mode, so a toggle will enable it
+			if (MyWebFonts.options.showDebugBlock == true) {
+				MyWebFonts.toggleDebug(null); // Useless parameter
+			}
 		}
 		
 		var date = new Date();
-		debugElement.insert( 	(date.getHours()<10?'0'+date.getHours():date.getHours()) + ":" + 
+		debugLogElement.insert( 	(date.getHours()<10?'0'+date.getHours():date.getHours()) + ":" + 
 								(date.getMinutes()<10?'0'+date.getMinutes():date.getMinutes()) + ":" + 
 								(date.getSeconds()<10?'0'+date.getSeconds():date.getSeconds()) + " " + 
 								(date.getMilliseconds()<10?'00'+date.getMilliseconds() : date.getMilliseconds()<100?'0'+date.getMilliseconds():date.getMilliseconds()) + "ms" + " : " + 
 								message + "\n"
 		);
 		
+	},
+	
+
+	toggleDebug: function(event) {
+		//var element = Event.element(event);
+		$('mywebfonts-debug-log').toggle();
+
+		if ($('mywebfonts-debug-log').visible()) {
+			$("mywebfonts-toggle-debug").update("» Hide Details");
+			
+			$('mywebfonts-debug').setStyle({
+				height:				"350px",
+				overflow:			"auto"
+			});
+
+		}
+		else {
+			$("mywebfonts-toggle-debug").update("» Show Details");
+			
+			$('mywebfonts-debug').setStyle({
+				height:				"20px",
+				overflow:			"normal"
+			});
+
+		}
+		
 	}
+
 	
 };
 
@@ -695,8 +724,7 @@ var RGBColor = Class.create({
 	                    parseInt(bits[3])
 	                ];
 	            }
-	        },
-	        {
+	        }, {
 	            re: /^(\w{2})(\w{2})(\w{2})$/, // example: '#00ff00', '336699'
 	            process: function(bits){
 	                return [
@@ -705,8 +733,7 @@ var RGBColor = Class.create({
 	                    parseInt(bits[3], 16)
 	                ];
 	            }
-	        },
-	        {
+	        }, {
 	            re: /^(\w{1})(\w{1})(\w{1})$/, // example: '#fb0', 'f0f'
 	            process: function (bits){
 	                return [
