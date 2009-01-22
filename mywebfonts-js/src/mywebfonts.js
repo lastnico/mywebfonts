@@ -35,7 +35,7 @@ var MyWebFonts = {
 	options: {
 		// Test for external request
 		//externalSite: "http://www.mywebfonts.org"
-		externalSite: 		"http://mywebfonts.minipoulpe.org",
+		externalSite: 		"",
 		// Displays a MyWebFonts debug block
 		debug:				true,
 		// Display by default the MyWebFonts debug block
@@ -531,8 +531,6 @@ var FoundElement = Class.create({
 var RGBColor = Class.create({
 	
 	initialize: function(colorString) {
-	    this.ok = false;
-	
 	    // Strip any leading #
 	    if (colorString.charAt(0) == '#') { // remove # if any
 	        colorString = colorString.substr(1,6);
@@ -541,7 +539,7 @@ var RGBColor = Class.create({
 	    colorString = colorString.replace(/ /g,'');
 	    colorString = colorString.toLowerCase();
 	
-	    // before getting into regexps, try simple matches and overwrite the input
+	    // Before getting into regexps, try simple matches and overwrite the input
 	    var simpleColors = {
 	        aliceblue: 'f0f8ff',
 	        antiquewhite: 'faebd7',
@@ -695,10 +693,10 @@ var RGBColor = Class.create({
 	    }
 	    // end of simple type-in colors
 	
-	    // array of color definition objects
+	    // Color definition objects
 	    var colorDefinitions = [
 	        {
-	            re: /^rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/, // example: 'rgb(123, 234, 45)', 'rgb(255,234,245)'
+	            re: /^rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/, // Example: 'rgb(123, 234, 45)', 'rgb(255,234,245)'
 	            process: function(bits) {
 	                return [
 	                    parseInt(bits[1]),
@@ -707,7 +705,7 @@ var RGBColor = Class.create({
 	                ];
 	            }
 	        }, {
-	            re: /^(\w{2})(\w{2})(\w{2})$/, // example: '#00ff00', '336699'
+	            re: /^(\w{2})(\w{2})(\w{2})$/, // Example: '#00ff00', '336699'
 	            process: function(bits){
 	                return [
 	                    parseInt(bits[1], 16),
@@ -716,7 +714,7 @@ var RGBColor = Class.create({
 	                ];
 	            }
 	        }, {
-	            re: /^(\w{1})(\w{1})(\w{1})$/, // example: '#fb0', 'f0f'
+	            re: /^(\w{1})(\w{1})(\w{1})$/, // Example: '#fb0', 'f0f'
 	            process: function (bits){
 	                return [
 	                    parseInt(bits[1] + bits[1], 16),
@@ -727,7 +725,7 @@ var RGBColor = Class.create({
 	        }
 	    ];
 	
-	    // search through the definitions to find a match
+	    // Search through the definitions to find a match
 	    for (var i = 0; i < colorDefinitions.length; i++) {
 	        var re = colorDefinitions[i].re;
 	        var processor = colorDefinitions[i].process;
@@ -737,18 +735,16 @@ var RGBColor = Class.create({
 	            this.r = channels[0];
 	            this.g = channels[1];
 	            this.b = channels[2];
-	            this.ok = true;
 	        }
 	
 	    }
 	
-	    // validate/cleanup values
+	    // Validate and cleanup values
 	    this.r = (this.r < 0 || isNaN(this.r)) ? 0 : ((this.r > 255) ? 255 : this.r);
 	    this.g = (this.g < 0 || isNaN(this.g)) ? 0 : ((this.g > 255) ? 255 : this.g);
 	    this.b = (this.b < 0 || isNaN(this.b)) ? 0 : ((this.b > 255) ? 255 : this.b);
 	},
 	
-    // some getters
     toRGB : function() {
         return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ')';
     },
