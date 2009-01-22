@@ -35,7 +35,7 @@ var MyWebFonts = {
 	options: {
 		// Test for external request
 		//externalSite: "http://www.mywebfonts.org"
-		externalSite: 		"",
+		externalSite: 		"http://mywebfonts.minipoulpe.org",
 		// Displays a MyWebFonts debug block
 		debug:				true,
 		// Display by default the MyWebFonts debug block
@@ -57,7 +57,7 @@ var MyWebFonts = {
 		"medium" : "14",
 		"large" : "16",
 		"x-large" : "18",
-		"xx-large" : "20",
+		"xx-large" : "20"
 	},
 	
 	initialize: function() {
@@ -75,13 +75,13 @@ var MyWebFonts = {
 		var fontColor = MyWebFonts.parseFontColor(domElement.style.color);
 		
 		if (fontIdentifier == null) {
-			MyWebFonts.debug("[addFoundElement] Invalid element found : " + domElement + " with " + fontIdentifier);
+			MyWebFonts.debug("addFoundElement", "Invalid element found : " + domElement + " with " + fontIdentifier);
 			return;
 		}
 		
 		var fontDefinition = new FontDefinition(fontIdentifier, fontVariant, fontSize, fontColor);
 		
-		MyWebFonts.debug("[addFoundElement] New element found : " + domElement + " with " + fontIdentifier);
+		MyWebFonts.debug("addFoundElement", "New element found : " + domElement + " with " + fontIdentifier);
 		MyWebFonts.foundElements.push(new FoundElement(domElement, fontDefinition));
 		
 		// First see if this elements could be processed using an available font
@@ -111,9 +111,9 @@ var MyWebFonts = {
 	
 	loadFontDatas: function(fontDefinition) {
 		// First search if already loaded, or currently loaded
-		MyWebFonts.debug("[loadFontDatas] Font Identifier : " + fontDefinition.fontIdentifier);
+		MyWebFonts.debug("loadFontDatas", "Font Identifier : " + fontDefinition.fontIdentifier);
 		
-		MyWebFonts.debug("[loadFontDatas] Adding Font Definition to pending list : " + fontDefinition.fontIdentifier);
+		MyWebFonts.debug("loadFontDatas", "Adding Font Definition to pending list : " + fontDefinition.fontIdentifier);
 		MyWebFonts.pendingFontDefinitions.push(fontDefinition);
 
 		var scriptUrl = MyWebFonts.createFontDatasUrl(fontDefinition);
@@ -131,29 +131,8 @@ var MyWebFonts = {
 		
 		var rgbColor = new RGBColor(fontColor); 
 		
-		MyWebFonts.debug("[parseFontColor] Font Color [" + rgbColor.toHex() + "]");
+		MyWebFonts.debug("parseFontColor", "Font Color [" + rgbColor.toHex() + "]");
 		return rgbColor.toHex().replace(/#/, "");
-		
-		if (fontColor[0] == "#") {
-			return fontColor.replace(/#/g, fontColor);
-		}
-		else if (fontColor[0] == "r" ) { ///gb"
-			var fontColorRegex = /rgb[\t\s]*\([\t\s]*(\d+)[\t\s]*,[\t\s]*(\d+)[\t\s]*,[\t\s]*(\d+)[\t\s]*\)[\t\s]*/;
-		
-			var colors = fontColor.match(fontColorRegex);
-			if (! colors) {
-				MyWebFonts.debug("[parseFontColor] Unable to parse Font Color [" + fontColor + "]");
-				return null;
-			}
-
-			MyWebFonts.debug("[parseFontColor] Red [" + colors[1] + "]");
-			MyWebFonts.debug("[parseFontColor] Green [" + colors[2] + "]");
-			MyWebFonts.debug("[parseFontColor] Blue [" + colors[3] + "]");
-			
-			return colors[1];
-		}
-			
-		return null;
 	},
 	
 	// This method always return a font size in pixels, to match server requirements
@@ -162,7 +141,7 @@ var MyWebFonts = {
 			return null;
 		
 		fontSize = fontSize.strip();
-		MyWebFonts.debug("[parseFontSize] Font Size [" + fontSize + "]");
+		MyWebFonts.debug("parseFontSize", "Font Size [" + fontSize + "]");
 		
 		if (MyWebFonts.FONT_SIZE_CONSTANTS[fontSize] != null)
 			return MyWebFonts.FONT_SIZE_CONSTANTS[fontSize];
@@ -227,22 +206,20 @@ var MyWebFonts = {
 	},
 	
 	newFont: function(fontDatas) {
-		MyWebFonts.debug("[newFont] Receive new font datas : " + fontDatas.fontIdentifier);
+		MyWebFonts.debug("newFont", "Receive new font datas : " + fontDatas.fontIdentifier);
 		
 		var font = new Font(fontDatas);
 		
-		MyWebFonts.debug("[newFont] [pre-remove] Pending list length : " + MyWebFonts.pendingFontDefinitions.length);
 		for (var i=0; i < MyWebFonts.pendingFontDefinitions.length; ++i) {
 			var currentFontDefinition = MyWebFonts.pendingFontDefinitions[i];
 			if (currentFontDefinition.equals(font.fontDefinition)) {
-				MyWebFonts.debug("[newFont] Removing font definition from pending list : " + font.fontDefinition.fontIdentifier);
+				MyWebFonts.debug("newFont", "Removing font definition from pending list : " + font.fontDefinition.fontIdentifier);
 				MyWebFonts.pendingFontDefinitions.splice(i, 1);
 				break;
 			}
 		}
-		MyWebFonts.debug("[newFont] [post-remove] Pending list length : " + MyWebFonts.pendingFontDefinitions.length);
 		
-		MyWebFonts.debug("[newFont] Adding Font to available list : " + font.fontDefinition.fontIdentifier);
+		MyWebFonts.debug("newFont", "Adding Font to available list : " + font.fontDefinition.fontIdentifier);
 		MyWebFonts.availableFonts.push(font);
 		
 		// Process Found Elements with this font
@@ -252,7 +229,7 @@ var MyWebFonts = {
 	},
 	
 	processFoundElementsWith: function(font) {
-		MyWebFonts.debug("[processFoundElementsWith] Process found elements with : " + font.fontDefinition.fontIdentifier);
+		MyWebFonts.debug("processFoundElementsWith", "Process found elements with : " + font.fontDefinition.fontIdentifier);
 		
 		for (var foundElementIndex = 0; foundElementIndex < MyWebFonts.foundElements.length; ++foundElementIndex) {
 			var foundElement = MyWebFonts.foundElements[foundElementIndex];
@@ -262,16 +239,14 @@ var MyWebFonts = {
 				continue;
 			}
 			
-			MyWebFonts.debug("Replacing element : " + foundElement.domElement);
+			MyWebFonts.debug("processFoundElementsWith", "Replacing element : " + foundElement.domElement);
 			var textNodes = foundElement.findTextNodes();
 			for (var i=0; i < textNodes.length; ++i) {
 				MyWebFonts.replaceText(textNodes[i], font);
 			}
 			
-			MyWebFonts.debug("[processFoundElementsWith] [pre-remove] Found element list length : " + MyWebFonts.foundElements.length);
 			// This element has been processed, it could be removed from list of found elements.
 			MyWebFonts.foundElements.splice(foundElementIndex, 1);
-			MyWebFonts.debug("[processFoundElementsWith] [post-remove] Found element list length : " + MyWebFonts.foundElements.length);
 			
 			foundElementIndex--;
 
@@ -286,11 +261,11 @@ var MyWebFonts = {
 		if (elementContent == "")
 			return;
 
-		MyWebFonts.debug("Element : " + element.nodeValue + "[type=" + element.nodeType + "]");
+		MyWebFonts.debug("replaceText", "Element : " + element.nodeValue + "[type=" + element.nodeType + "]");
 	
 		var parent = element.parentNode;
 		
-		MyWebFonts.debug("Parent : " + parent.nodeName + "[type=" + parent.nodeType + "]");
+		MyWebFonts.debug("replaceText", "Parent : " + parent.nodeName + "[type=" + parent.nodeType + "]");
 		
 		// TODO Separate each words inside a span, and add a "whitespace: no-wrap" to be sure words are not cut in their middle.  
 		var letterImages = MyWebFonts.createTextImage(element.nodeValue, font);
@@ -361,7 +336,7 @@ var MyWebFonts = {
 		return letterImages;
 	},
 	
-	debug: function(message) {
+	debug: function(method, message) {
 		if (MyWebFonts.options.debug==false)
 			return;
 		
@@ -378,17 +353,18 @@ var MyWebFonts = {
 				left:				"0px",
 				right:				"0px",
 				height:				"20px",
-				overflow:			"normal",
-				padding:			"1px 10px 1px 10px",
+				padding:			"1px 0px 1px 10px",
 				margin:				"0px auto 0px auto"
 			});
 			
-			debugLogElement = new Element("pre", { id: "mywebfonts-debug-log" } );
+			debugLogElement = new Element("div", { id: "mywebfonts-debug-log" } );
 			debugLogElement.setStyle({
 				fontFamily: 		"monospace",
 				fontSize:			"11px",
 				margin:				"0",
-				display:			"none"
+				display:			"none",
+				overflow :			"auto",
+				height:				"320px"
 			});
 			
 			var debugTitle = new Element("h2", { "title" : "Click here to have more details about MyWebFonts debugging" }).update("My Web Fonts Debug Log");
@@ -397,7 +373,6 @@ var MyWebFonts = {
 				fontSize:			"12px",
 				padding:			"0px 0px 10px 0px",
 				color:				"#BA6912",
-				border:				"0",
 				cursor:				"pointer",
 				margin:				"0"
 			});
@@ -407,7 +382,7 @@ var MyWebFonts = {
 			debugToggleLog.setStyle({
 				"float":			"right",
 				fontSize:			"12px",
-				padding:			"0px",
+				padding:			"0px 10px 0 0",
 				fontWeight:			"bold",
 				color:				"#BA6912",
 				border:				"0",
@@ -429,12 +404,21 @@ var MyWebFonts = {
 		}
 		
 		var date = new Date();
-		debugLogElement.insert( 	(date.getHours()<10?'0'+date.getHours():date.getHours()) + ":" + 
-								(date.getMinutes()<10?'0'+date.getMinutes():date.getMinutes()) + ":" + 
-								(date.getSeconds()<10?'0'+date.getSeconds():date.getSeconds()) + " " + 
-								(date.getMilliseconds()<10?'00'+date.getMilliseconds() : date.getMilliseconds()<100?'0'+date.getMilliseconds():date.getMilliseconds()) + "ms" + " : " + 
-								message + "\n"
-		);
+		
+		var spanDate = new Element("span").update(
+				(date.getHours()<10?'0'+date.getHours():date.getHours()) + ":" + 
+				(date.getMinutes()<10?'0'+date.getMinutes():date.getMinutes()) + ":" + 
+				(date.getSeconds()<10?'0'+date.getSeconds():date.getSeconds()) + " " + 
+				(date.getMilliseconds()<10?'00'+date.getMilliseconds() : date.getMilliseconds()<100?'0'+date.getMilliseconds():date.getMilliseconds()) + 
+				"ms ");
+		spanDate.setStyle({ color: "#61A840" });
+		debugLogElement.insert(spanDate);
+		
+		var spanMethod = new Element("span").update("[" + method + "] ");
+		spanMethod.setStyle({ color: "#8CBFE5" });
+		debugLogElement.insert(spanMethod);
+		debugLogElement.insert(new Element("span").update(message));
+		debugLogElement.insert(new Element("br"));
 		
 	},
 	
@@ -447,8 +431,7 @@ var MyWebFonts = {
 			$("mywebfonts-toggle-debug").update("» Hide Details");
 			
 			$('mywebfonts-debug').setStyle({
-				height:				"350px",
-				overflow:			"auto"
+				height:				"350px"
 			});
 
 		}
@@ -456,8 +439,7 @@ var MyWebFonts = {
 			$("mywebfonts-toggle-debug").update("» Show Details");
 			
 			$('mywebfonts-debug').setStyle({
-				height:				"20px",
-				overflow:			"normal"
+				height:				"20px"
 			});
 
 		}
@@ -477,26 +459,26 @@ var FontDefinition = Class.create({
 
 	equals: function(otherFontDefinition) {
 		if (this.fontIdentifier != otherFontDefinition.fontIdentifier) {
-			MyWebFonts.debug("Not same fontIdentifier : " + this.fontIdentifier + " != " + otherFontDefinition.fontIdentifier);
+			MyWebFonts.debug("FontDefinition.equals", "Not same fontIdentifier : " + this.fontIdentifier + " != " + otherFontDefinition.fontIdentifier);
 			return false;
 		}
 		
 		if (this.fontVariant != otherFontDefinition.fontVariant) {
-			MyWebFonts.debug(this.fontIdentifier + " : Not same fontVariant : " + this.fontVariant + " != " + otherFontDefinition.fontVariant);
+			MyWebFonts.debug("FontDefinition.equals", this.fontIdentifier + " : Not same fontVariant : " + this.fontVariant + " != " + otherFontDefinition.fontVariant);
 			return false;
 		}
 		
 		if (this.fontSize != otherFontDefinition.fontSize) {
-			MyWebFonts.debug(this.fontIdentifier + " : Not same fontSize : " + this.fontSize + " != " + otherFontDefinition.fontSize);
+			MyWebFonts.debug("FontDefinition.equals", this.fontIdentifier + " : Not same fontSize : " + this.fontSize + " != " + otherFontDefinition.fontSize);
 			return false;
 		}
 		
 		if (this.fontColor != otherFontDefinition.fontColor) {
-			MyWebFonts.debug(this.fontIdentifier + " : Not same fontColor : " + this.fontColor + " != " + otherFontDefinition.fontColor);
+			MyWebFonts.debug("FontDefinition.equals", this.fontIdentifier + " : Not same fontColor : " + this.fontColor + " != " + otherFontDefinition.fontColor);
 			return false;
 		}
 	
-		MyWebFonts.debug(this.fontIdentifier + " : Correct font found.");
+		MyWebFonts.debug("FontDefinition.equals", this.fontIdentifier + " : Correct font found.");
 		return true;
 	}
 });
