@@ -80,7 +80,7 @@ var MyWebFonts = {
 		}
 		
 		var fontDefinition = new FontDefinition(fontIdentifier, fontVariant, fontSize, fontColor);
-		
+
 		MyWebFonts.debug("addFoundElement", "New element found : " + domElement + " with " + fontIdentifier);
 		MyWebFonts.foundElements.push(new FoundElement(domElement, fontDefinition));
 		
@@ -261,7 +261,7 @@ var MyWebFonts = {
 		if (elementContent == "")
 			return;
 
-		MyWebFonts.debug("replaceText", "Element : " + element.nodeValue + "[type=" + element.nodeType + "]");
+		MyWebFonts.debug("replaceText", "Content Element : " + element.nodeValue + "[type=" + element.nodeType + "]");
 	
 		var parent = element.parentNode;
 		
@@ -307,10 +307,11 @@ var MyWebFonts = {
 
 
 	createTextImage: function(word, font) {
+		MyWebFonts.debug("createTextImage", "Replace word '" + word + "' using font " + font.fontDefinition.fontIdentifier);
 		var letterImages = new Array();
 		var coordinates = font.coordinates;
 		for (var index = 0; index < word.length; ++index) {
-			var currentLetter = word[index];
+			var currentLetter = word.charAt(index);
 			var letterCoordinate = coordinates[currentLetter];
 			if (letterCoordinate == null) {
 				letterImages.push(new Element('span').update(currentLetter));
@@ -349,13 +350,19 @@ var MyWebFonts = {
 				background:			"#FFFFCC none repeat scroll 0 0",
 				color:				"#252111",
 				position:			"fixed",
-				bottom:				"0px",
+				top:				"0px", //bottom:				"0px",
 				left:				"0px",
 				right:				"0px",
 				height:				"20px",
 				padding:			"1px 0px 1px 10px",
 				margin:				"0px auto 0px auto"
 			});
+			
+			if (Prototype.Browser.IE) {
+				debugElement.setStyle({
+					position:			"absolute"
+			    }); 
+			}
 			
 			debugLogElement = new Element("div", { id: "mywebfonts-debug-log" } );
 			debugLogElement.setStyle({
@@ -364,14 +371,14 @@ var MyWebFonts = {
 				margin:				"0",
 				display:			"none",
 				overflow :			"auto",
-				height:				"320px"
+				height:				"292px"
 			});
 			
 			var debugTitle = new Element("h2", { "title" : "Click here to have more details about MyWebFonts debugging" }).update("My Web Fonts Debug Log");
 			debugTitle.setStyle({
 				fontFamily: 		"monospace",
 				fontSize:			"12px",
-				padding:			"0px 0px 10px 0px",
+				padding:			"0px 0px 2px 0px",
 				color:				"#BA6912",
 				cursor:				"pointer",
 				margin:				"0"
@@ -382,7 +389,7 @@ var MyWebFonts = {
 			debugToggleLog.setStyle({
 				"float":			"right",
 				fontSize:			"12px",
-				padding:			"0px 10px 0 0",
+				padding:			"0px 2px 0 0",
 				fontWeight:			"bold",
 				color:				"#BA6912",
 				border:				"0",
@@ -390,9 +397,18 @@ var MyWebFonts = {
 			});
 			debugToggleLog.observe('click', MyWebFonts.toggleDebug);
 
+			var debugExplanation = new Element("div", { "id" : "mywebfonts-debug-description" }).update("You are seeing this block because the 'debug' option in the mywebfonts.js script is set to true. Sets it to false to disable this log.");
+			debugExplanation.setStyle({
+				color:				"#ccc",
+				fontSize:			"10px",
+				padding:			"0px 0px 10px 0px",
+				fontStyle:			"italic",
+				display:			"none"
+			})
 			
 			debugElement.appendChild(debugToggleLog);
 			debugElement.appendChild(debugTitle);
+			debugElement.appendChild(debugExplanation);
 			debugElement.appendChild(debugLogElement);
 			
 			$$("body").last().appendChild(debugElement);
@@ -424,9 +440,9 @@ var MyWebFonts = {
 	
 
 	toggleDebug: function(event) {
-		//var element = Event.element(event);
 		$('mywebfonts-debug-log').toggle();
-
+		$('mywebfonts-debug-description').toggle();
+		
 		if ($('mywebfonts-debug-log').visible()) {
 			$("mywebfonts-toggle-debug").update("» Hide Details");
 			
