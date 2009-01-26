@@ -39,7 +39,7 @@ var MyWebFonts = {
 		// Displays a MyWebFonts debug block
 		debug:				true,
 		// Display by default the MyWebFonts debug block
-		showDebugBlock:		false
+		showDebugBlock:		true
 	},
 	
 	// Found Elements of the current page
@@ -48,6 +48,8 @@ var MyWebFonts = {
 	availableFonts: 				[],
 	// Fonts Datas that MyWebFonts is currently downloading
 	pendingFontDefinitions: 		[],
+	
+	cssFontClasses:					[],
 
 	// Constants
 	FONT_SIZE_CONSTANTS: {
@@ -60,8 +62,11 @@ var MyWebFonts = {
 		"xx-large" : "20"
 	},
 	
+	// Class name to detect DOM elements to process
+	CSS_CLASS_NAME : "mywebfonts", 
+	
 	initialize: function() {
-		var domElements = $$(".mywebfonts");
+		var domElements = $$("." + MyWebFonts.CSS_CLASS_NAME);
 		for (var index = 0; index < domElements.length; ++index) {
 			MyWebFonts.addFoundElement(domElements[index]);
 		}
@@ -69,19 +74,18 @@ var MyWebFonts = {
 	},
 
 	addFoundElement: function(domElement) {
-		var fontIdentifier = MyWebFonts.parseFontFamily(domElement.style.fontFamily);
-		var fontVariant = null; //TODO
-		var fontSize = MyWebFonts.parseFontSize(domElement.style.fontSize);
-		var fontColor = MyWebFonts.parseFontColor(domElement.style.color);
-		
-		if (fontIdentifier == null) {
-			MyWebFonts.debug("addFoundElement", "Invalid element found : " + domElement + " with " + fontIdentifier);
-			return;
+		var cssFontClass = MyWebFonts.findCssFontClass(domElement);
+		if (cssFontClass != null) {
+			MyWebFonts.debug("addFoundElement", "Found CSS Class Name: " + domElement + " with " + cssFontClass.cssClassName);
 		}
 		
-		var fontDefinition = new FontDefinition(fontIdentifier, fontVariant, fontSize, fontColor);
+		var fontDefinition = MyWebFonts.findFontDefinition(domElement, cssFontClass);
+		if (fontDefinition == null) {
+			MyWebFonts.debug("addFoundElement", "Invalid element found : " + domElement);
+			return;
+		}
 
-		MyWebFonts.debug("addFoundElement", "New element found : " + domElement + " with " + fontIdentifier);
+		MyWebFonts.debug("addFoundElement", "New element found : " + domElement + " with " + fontDefinition.fontIdentifier);
 		MyWebFonts.foundElements.push(new FoundElement(domElement, fontDefinition));
 		
 		// First see if this elements could be processed using an available font
@@ -109,6 +113,54 @@ var MyWebFonts = {
 		MyWebFonts.loadFontDatas(fontDefinition);
 	},
 	
+	/**
+	 * Define a FontDefinition mixing an eventual CssFontClass and the content of
+	 * the style attribute of the DOM element
+	 */
+	findFontDefinition: function(domElement, cssFontClass) {
+		var fontIdentifier = MyWebFonts.parseFontFamily(domElement.style.fontFamily);
+		if (cssFontClass != null && fontIdentifier == null)
+			fontIdentifier = cssFontClass.fontDefinition.fontIdentifier;
+		
+		// Special case: if the fontIdentifier could not be defined, this font definition is not valid
+		if (fontIdentifier == null)
+			return null;
+		
+		var fontVariant = MyWebFonts.parseFontVariant(domElement.style.fontVariant);
+		if (cssFontClass != null && fontVariant == null)
+			fontVariant = cssFontClass.fontDefinition.fontVariant;
+
+		var fontSize = MyWebFonts.parseFontSize(domElement.style.fontSize);
+		if (cssFontClass != null && fontSize == null)
+			fontSize = cssFontClass.fontDefinition.fontSize;
+
+		var fontColor = MyWebFonts.parseFontColor(domElement.style.color);
+		if (cssFontClass != null && fontColor == null)
+			fontColor = cssFontClass.fontDefinition.fontColor;
+
+		return new FontDefinition(fontIdentifier, fontVariant, fontSize, fontColor);
+	},
+	
+	findCssFontClass: function(domElement) {
+		var cssClasses = domElement.className.split(" ");
+		
+		for (var i = 0; i < cssClasses.length; ++i) {
+			var cssClass = cssClasses[i];
+			if (cssClass == MyWebFonts.CSS_CLASS_NAME)
+				continue;
+			
+			for (var j=0; j < MyWebFonts.cssFontClasses.length; ++j) {
+				var cssFontClass = MyWebFonts.cssFontClasses[j];
+				
+				if (cssFontClass.cssClassName == cssClass)
+					return cssFontClass;
+				
+			}
+		}
+		
+		return null;
+	},
+	
 	loadFontDatas: function(fontDefinition) {
 		// First search if already loaded, or currently loaded
 		MyWebFonts.debug("loadFontDatas", "Font Identifier : " + fontDefinition.fontIdentifier);
@@ -117,6 +169,8 @@ var MyWebFonts = {
 		MyWebFonts.pendingFontDefinitions.push(fontDefinition);
 
 		var scriptUrl = MyWebFonts.createFontDatasUrl(fontDefinition);
+		MyWebFonts.debug("loadFontDatas", "Appending script URL to head : " + scriptUrl);
+		
 		var script = new Element('script', { "type": "text/javascript", "src": scriptUrl });
 		$$("head").first().appendChild(script);
 
@@ -124,7 +178,7 @@ var MyWebFonts = {
 	
 	
 	parseFontColor: function(fontColor) {
-		if (fontColor.empty() == true)
+		if (fontColor == null || fontColor.empty() == true)
 			return null;
 		
 		fontColor = fontColor.strip();
@@ -135,9 +189,16 @@ var MyWebFonts = {
 		return rgbColor.toHex().replace(/#/, "");
 	},
 	
+	parseFontVariant: function(fontVariant) {
+		if (fontVariant == null || fontVariant.empty() == true)
+			return null;
+		
+		return fontVariant.strip();
+	},
+	
 	// This method always return a font size in pixels, to match server requirements
 	parseFontSize: function(fontSize) {
-		if (fontSize.empty() == true)
+		if (fontSize == null || fontSize.empty() == true)
 			return null;
 		
 		fontSize = fontSize.strip();
@@ -164,6 +225,9 @@ var MyWebFonts = {
 	},
 	
 	parseFontFamily: function(fontFamily) {
+		if (fontFamily == null || fontFamily.empty() == true)
+			return null;
+
 		fonts = fontFamily.split(",");
 		if (fonts.length == 0) {
 			fonts = new Array();
@@ -208,7 +272,7 @@ var MyWebFonts = {
 	newFont: function(fontDatas) {
 		MyWebFonts.debug("newFont", "Receive new font datas : " + fontDatas.fontIdentifier);
 		
-		var font = new Font(fontDatas);
+		var font = new Font(fontDatas, MyWebFonts.options.externalSite);
 		
 		for (var i=0; i < MyWebFonts.pendingFontDefinitions.length; ++i) {
 			var currentFontDefinition = MyWebFonts.pendingFontDefinitions[i];
@@ -319,10 +383,9 @@ var MyWebFonts = {
 			}
 	
 
-			var imageUrl = MyWebFonts.options.externalSite + font.contentImagePath;
-			var backgroundParameter = (-letterCoordinate.x) + "px " + (-letterCoordinate.y) + "px url(" + imageUrl + ")";
+			var backgroundParameter = (-letterCoordinate.x) + "px " + (-letterCoordinate.y) + "px url(" + font.contentImageUrl() + ")";
 	
-			var image = new Element('img', { src: MyWebFonts.options.externalSite + font.transparencyImagePath, alt: currentLetter });
+			var image = new Element('img', { src: font.transparencyImageUrl(), alt: currentLetter });
 			image.setStyle({
 				background: 			backgroundParameter,
 				width:					letterCoordinate.width + "px",
@@ -335,6 +398,34 @@ var MyWebFonts = {
 		}
 
 		return letterImages;
+	},
+	
+	/**
+	 * Add a CSS Font Class
+	 */
+	addCssFontClass: function(datas) {
+		MyWebFonts.debug("addCssFontClass", "Adding new MyWebFonts class " + datas.className);
+		
+		if (datas.className == null) {
+			MyWebFonts.debug("addCssFontClass", "Invalid MyWebFonts class: No cssClassName");
+			return;
+		}
+
+		if (datas.fontFamily == null) {
+			MyWebFonts.debug("addCssFontClass", "Invalid MyWebFonts class: No fontFamily");
+			return;
+		}
+
+
+		var cssFontClass = new CssFontClass(datas.className, datas.fontFamily, datas.fontVariant, datas.fontSize, datas.color);
+
+		// TODO First Look if this css class name already exists, and replaces it
+		MyWebFonts.cssFontClasses.push(cssFontClass);
+		
+	},
+	
+	addFontPackage: function(fontPackage) {
+		// TODO
 	},
 	
 	debug: function(method, message) {
@@ -499,17 +590,39 @@ var FontDefinition = Class.create({
 	}
 });
 
-
+var CssFontClass = Class.create({
+	initialize: function(cssClassName, fontIdentifier, fontVariant, fontSize, fontColor) {
+		this.cssClassName = cssClassName;
+	
+		fontIdentifier = MyWebFonts.parseFontFamily(fontIdentifier);
+		fontVariant = MyWebFonts.parseFontVariant(fontVariant);
+		fontSize = MyWebFonts.parseFontSize(fontSize);
+		fontColor = MyWebFonts.parseFontColor(fontColor);
+		
+		this.fontDefinition = new FontDefinition(fontIdentifier, fontVariant, fontSize, fontColor);
+	}
+	
+});
 
 var Font = Class.create({
-	initialize: function(fontDatas) {
+	initialize: function(fontDatas, imageUrl) {
 		this.contentImagePath = fontDatas.contentImagePath;
 		this.transparencyImagePath = fontDatas.transparencyImagePath;
 		
 		this.fontDefinition = new FontDefinition(fontDatas.fontIdentifier, fontDatas.fontVariant, fontDatas.fontSize, fontDatas.fontColor);
 
 		this.coordinates = fontDatas.coordinates;
-	}
+		
+		this.imageUrl = imageUrl;
+	},
+
+	contentImageUrl: function() {
+		return this.imageUrl + this.contentImagePath;
+	},
+
+	transparencyImageUrl: function() {
+		return this.imageUrl + this.transparencyImagePath;
+	},
 
 });
 
@@ -779,6 +892,10 @@ var RGBColor = Class.create({
 
 
 document.observe("dom:loaded", function() {
+	try {
+		myWebFontsAdditionalContent();
+	} catch(e) {}
+	
 	// Initialize MyWebFonts
 	MyWebFonts.initialize();
 });
