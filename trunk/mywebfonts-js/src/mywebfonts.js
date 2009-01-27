@@ -172,8 +172,9 @@ var MyWebFonts = {
 		
 		fontSize = fontSize.strip();
 		
-		if (MyWebFonts.FONT_SIZE_CONSTANTS[fontSize] != null)
-			return MyWebFonts.FONT_SIZE_CONSTANTS[fontSize];
+		var fontSizeConstant = MyWebFonts.FONT_SIZE_CONSTANTS[fontSize];
+		if (fontSizeConstant != null)
+			return fontSizeConstant;
 		
 		var fontSizeRegex = /[\t\s]*(\d+\.?\d*)(px|pt|em)[\t\s]*/;
 
@@ -269,20 +270,17 @@ var MyWebFonts = {
 	
 	replaceText: function(element, font) {
 		var elementContent = element.nodeValue;
+		var parent = element.parentNode;
 
-		// TODO Be sure tabs are also stripped 
 		elementContent = elementContent.strip();
-		if (elementContent == "")
+		if (elementContent.empty())
 			return;
 
-		MyWebFonts.debug("replaceText", "Content Element : " + element.nodeValue + "[type=" + element.nodeType + "]");
-	
-		var parent = element.parentNode;
-		
+		MyWebFonts.debug("replaceText", "Content Element : " + elementContent.replace(/\s/g, "&nbsp;") + "[type=" + element.nodeType + "]");
 		MyWebFonts.debug("replaceText", "Parent : " + parent.nodeName + "[type=" + parent.nodeType + "]");
 		
 		// TODO Separate each words inside a span, and add a "whitespace: no-wrap" to be sure words are not cut in their middle.  
-		var letterImages = MyWebFonts.createTextImage(element.nodeValue, font);
+		var letterImages = MyWebFonts.createTextImage(elementContent, font);
 		
 		// Create a <span> element which will contains <img> tags that will replace element content
 		var substitute = new Element("span");
