@@ -12,13 +12,13 @@ var MyWebFonts = {
 
 	// Configuration
 	options: {
-		// My Web Fonts Website
-		//externalSite: "http://www.mywebfonts.org"
-		externalSite: 		"",
 		// Show the MyWebFonts Debug Log bar
-		debug:				true,
+		debug:				false,
 		// Toggle the MyWebFonts Debug Log at loading
-		showDebugBlock:		false
+		showDebugBlock:		false,
+		// Set this variable to true to be informed of which FontPackage you need to host MyWebFonts datas on your server
+		// This option is particularly useful when you want to entirely move font datas to your own server (no dependency anymore to My Web Fonts server)  
+		useOnlyFontPackages:	false
 	},
 	
 	// Found Elements of the current page
@@ -29,6 +29,10 @@ var MyWebFonts = {
 	pendingFontDefinitions: 		[],
 	// CSS Font Classes
 	cssFontClasses:					[],
+
+	// My Web Fonts Website
+	// EXTERNAL_SITE: "http://www.mywebfonts.org"
+	EXTERNAL_SITE: "",
 
 	// CSS Font Size Constants
 	FONT_SIZE_CONSTANTS: { "xx-small": "8", "x-small": "10", "small": "12", "medium": "14", "large": "16", "x-large": "18", "xx-large": "20" },
@@ -131,6 +135,11 @@ var MyWebFonts = {
 	},
 	
 	loadFontDatas: function(fontDefinition) {
+		if (MyWebFonts.options.useOnlyFontPackages) {
+			MyWebFonts.info("loadFontDatas", "This page uses the " + fontDefinition.str() + " remote font. It has been disabled because useOnlyFontPackages option is set to true. To solve this, download the <a href='" + fontDefinition.createFontPackageUrl() + "'>" + fontDefinition.str() + " Font Package</a> and <a href='" + MyWebFonts.EXTERNAL_SITE + "/documentation/developer-guide#fontPackage'>install</a> it.");
+			return;
+		}
+		
 		// First search if already loaded, or currently loaded
 		MyWebFonts.debug("loadFontDatas", "Font Identifier : " + fontDefinition.fontIdentifier);
 		
@@ -221,26 +230,37 @@ var MyWebFonts = {
 	},
 
 	newFont: function(fontDatas) {
-		MyWebFonts.debug("newFont", "Receive new font datas : " + fontDatas.fontIdentifier);
+		MyWebFonts.debug("newFont", "Receive new font datas... " + fontDatas.fontIdentifier);
 		
-		var font = new Font(fontDatas, MyWebFonts.options.externalSite);
+		var font = new Font(fontDatas, MyWebFonts.EXTERNAL_SITE);
 		
 		for (var i=0; i < MyWebFonts.pendingFontDefinitions.length; ++i) {
 			var currentFontDefinition = MyWebFonts.pendingFontDefinitions[i];
 			if (currentFontDefinition.equals(font.fontDefinition)) {
-				MyWebFonts.debug("newFont", "Removing font definition from pending list : " + font.fontDefinition.fontIdentifier);
 				MyWebFonts.pendingFontDefinitions.splice(i, 1);
 				break;
 			}
 		}
 		
-		MyWebFonts.debug("newFont", "Adding Font to available list : " + font.fontDefinition.fontIdentifier);
+		MyWebFonts.debug("newFont", "Adding Font to available list : " + font.fontDefinition.str());
 		MyWebFonts.availableFonts.push(font);
 		
 		// Process Found Elements with this font
 		MyWebFonts.processFoundElementsWith(font);
 		
 
+	},
+	
+	addFontPackage: function(fontPackage) {
+		MyWebFonts.debug("addFontPackage", "New Font Package : " + fontPackage.fontIdentifier);
+
+		var font = new Font(fontPackage, fontPackage.imagesUrl);
+
+		MyWebFonts.availableFonts.push(font);
+		
+		if (fontPackage.version != MyWebFonts.version) {
+			MyWebFonts.info("addFontPackage", "The Font Package " + font.fontDefinition.str() + " and your current current My Web Fonts API does not have the same version. You should update your font package or your <a href='" + MyWebFonts.EXTERNAL_SITE + "/download'>My Web Fonts API</a>.");
+		}
 	},
 	
 	processFoundElementsWith: function(font) {
@@ -327,34 +347,38 @@ var MyWebFonts = {
 	 * Add a CSS Font Class
 	 */
 	addCssFontClass: function(datas) {
-		MyWebFonts.debug("addCssFontClass", "Adding new MyWebFonts class " + datas.className);
+		MyWebFonts.debug("addCssFontClass", "Adding new MyWebFonts class " + datas["className"]);
 		
-		if (datas.className == null) {
+		if (datas["className"] == null) {
 			MyWebFonts.debug("addCssFontClass", "Invalid MyWebFonts class: No cssClassName");
 			return;
 		}
 
-		if (datas.fontFamily == null) {
+		if (datas["font-family"] == null) {
 			MyWebFonts.debug("addCssFontClass", "Invalid MyWebFonts class: No fontFamily");
 			return;
 		}
 
 
-		var cssFontClass = new CssFontClass(datas.className, datas.fontFamily, datas.fontVariant, datas.fontSize, datas.color);
+		var cssFontClass = new CssFontClass(datas["className"], datas["font-family"], datas["font-variant"], datas["font-size"], datas["color"]);
 
 		// TODO First Look if this css class name already exists, and replaces it
 		MyWebFonts.cssFontClasses.push(cssFontClass);
 		
 	},
 	
-	addFontPackage: function(fontPackage) {
-		// TODO
+	info: function(method, message) {
+		MyWebFonts.message("info", method, message);
 	},
 	
 	debug: function(method, message) {
 		if (MyWebFonts.options.debug==false)
 			return;
 		
+		MyWebFonts.message("debug", method, message);
+	},
+	
+	message: function(level, method, message) {
 		var debugLogElement = $("mywebfonts-debug-log");
 		// If this element does not exist, initialize Debug block
 		if (debugLogElement == null) {
@@ -411,7 +435,7 @@ var MyWebFonts = {
 			});
 			debugToggleLog.observe('click', MyWebFonts.toggleDebug);
 
-			var debugExplanation = new Element("div", { "id" : "mywebfonts-debug-description" }).update("You are seeing this block because the 'debug' option in the mywebfonts.js script is set to true. Sets it to false to disable this log.");
+			var debugExplanation = new Element("div", { "id" : "mywebfonts-debug-description" }).update("You are seeing this block because the 'debug' option in the mywebfonts.js script is set to true (Sets it to false to disable this log). If you see Red Messages, fix them to remove automatically this log.");
 			debugExplanation.setStyle({
 				color: "#ccc",
 				fontSize: "10px",
@@ -443,11 +467,17 @@ var MyWebFonts = {
 				"ms ");
 		spanDate.setStyle({ color: "#61A840" });
 		debugLogElement.insert(spanDate);
-		
+			
 		var spanMethod = new Element("span").update("[" + method + "] ");
 		spanMethod.setStyle({ color: "#8CBFE5" });
 		debugLogElement.insert(spanMethod);
-		debugLogElement.insert(new Element("span").update(message));
+
+		var spanMessage = new Element("span").update(message)
+		if (level == "info") {
+			spanMessage.setStyle({ color: "#D03838", fontWeight: "bold" });
+		}
+
+		debugLogElement.insert(spanMessage);
 		debugLogElement.insert(new Element("br"));
 		
 	},
@@ -487,38 +517,58 @@ var FontDefinition = Class.create({
 		this.fontColor = fontColor;
 	},
 
-	equals: function(otherFontDefinition) {
-		if (this.fontIdentifier != otherFontDefinition.fontIdentifier)
+	equals: function(other) {
+		if (this.fontIdentifier != other.fontIdentifier)
 			return false;
 		
-		if (this.fontVariant != otherFontDefinition.fontVariant)
+		if (this.fontVariant != other.fontVariant)
 			return false;
 		
-		if (this.fontSize != otherFontDefinition.fontSize)
+		if (this.fontSize != other.fontSize)
 			return false;
 		
-		if (this.fontColor != otherFontDefinition.fontColor)
+		if (this.fontColor != other.fontColor)
 			return false;
 	
 		return true;
 	},
 
-	createFontDatasUrl: function() {
-		genericUrl = MyWebFonts.options.externalSite;
-		genericUrl += "/font/" + this.fontIdentifier;
-		genericUrl += "/r:" + MyWebFonts.version;
+	createFontPackageUrl: function() {
+		return MyWebFonts.EXTERNAL_SITE + "/package" + this.createGenericFontUrl();
+	},
+	
+	createGenericFontUrl: function() {
+		var url = "/font/" + this.fontIdentifier;
+		url += "/r:" + MyWebFonts.version;
 		
 		if (this.fontVariant != null) 
-			genericUrl += "/v:" + this.fontVariant;
+			url += "/v:" + this.fontVariant;
 		
 		if (this.fontSize != null)
-			genericUrl += "/" + this.fontSize + "px";
+			url += "/" + this.fontSize + "px";
 		
 		if (this.fontColor != null)
-			genericUrl += "/c:" + this.fontColor;
+			url += "/c:" + this.fontColor;
 		
-		return genericUrl + "/datas";
+		return url;
+	},
+	
+	createFontDatasUrl: function() {
+		return MyWebFonts.EXTERNAL_SITE + this.createGenericFontUrl() + "/datas";
+	},
+	
+	str: function() {
+		var name = "\"" + this.fontIdentifier + "";
+		if (this.fontVariant != null) 
+			name += " - " + this.fontVariant + "";
 		
+		if (this.fontSize != null)
+			name += ", " + this.fontSize + "px";
+		
+		if (this.fontColor != null)
+			name += ", #" + this.fontColor;
+		
+		return name + "\"";
 	}
 
 });
