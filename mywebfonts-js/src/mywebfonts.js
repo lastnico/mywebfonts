@@ -7,20 +7,36 @@
  * For details, see the My Web Fonts web site: http://www.mywebfonts.org/
  */
 var MyWebFonts = {
-
 	version: '0.2-dev',
 
-	// Configuration
+	// My Web Fonts Configuration
 	options: {
 		// Show the MyWebFonts Debug Log bar
 		debug:				false,
+		
 		// Toggle the MyWebFonts Debug Log at loading
 		showDebugBlock:		false,
-		// Set this variable to true to be informed of which FontPackage you need to host MyWebFonts datas on your server
-		// This option is particularly useful when you want to entirely move font datas to your own server (no dependency anymore to My Web Fonts server)  
+		
+		/* 
+		 * Set this variable to true to be informed of which FontPackage you need to host 
+		 * MyWebFonts datas on your server.
+		 * This option is particularly useful when you want to entirely move font datas 
+		 * to your own server (no dependency anymore to My Web Fonts server).
+		 */
 		useOnlyFontPackages:	false
 	},
 	
+	// My Web Fonts Website
+	// TODO Use real external site
+	// EXTERNAL_SITE: "http://www.mywebfonts.org",
+	EXTERNAL_SITE: "",
+
+	// CSS Font Size Constants
+	FONT_SIZE_CONSTANTS: { "xx-small": "8", "x-small": "10", "small": "12", "medium": "14", "large": "16", "x-large": "18", "xx-large": "20" },
+	
+	// Class name used to detect DOM elements to process
+	CSS_CLASS_NAME : "mywebfonts", 
+
 	// Found Elements of the current page
 	foundElements: 					[],
 	// Fonts Datas already downloaded
@@ -30,16 +46,6 @@ var MyWebFonts = {
 	// CSS Font Classes
 	cssFontClasses:					[],
 
-	// My Web Fonts Website
-	// EXTERNAL_SITE: "http://www.mywebfonts.org"
-	EXTERNAL_SITE: "",
-
-	// CSS Font Size Constants
-	FONT_SIZE_CONSTANTS: { "xx-small": "8", "x-small": "10", "small": "12", "medium": "14", "large": "16", "x-large": "18", "xx-large": "20" },
-	
-	// Class name used to detect DOM elements to process
-	CSS_CLASS_NAME : "mywebfonts", 
-	
 	initialize: function() {
 		var domElements = $$("." + MyWebFonts.CSS_CLASS_NAME);
 		for (var index = 0; index < domElements.length; ++index) {
@@ -59,7 +65,7 @@ var MyWebFonts = {
 			return;
 		}
 
-		MyWebFonts.debug("addFoundElement", "New element found : " + domElement + " with " + fontDefinition.fontIdentifier);
+		MyWebFonts.debug("addFoundElement", "New element found : " + domElement + " with " + fontDefinition.str());
 		MyWebFonts.foundElements.push(new FoundElement(domElement, fontDefinition));
 		
 		// First see if this elements could be processed using an available font
@@ -127,7 +133,6 @@ var MyWebFonts = {
 				
 				if (cssFontClass.cssClassName == cssClass)
 					return cssFontClass;
-				
 			}
 		}
 		
@@ -141,9 +146,7 @@ var MyWebFonts = {
 		}
 		
 		// First search if already loaded, or currently loaded
-		MyWebFonts.debug("loadFontDatas", "Font Identifier : " + fontDefinition.fontIdentifier);
-		
-		MyWebFonts.debug("loadFontDatas", "Adding Font Definition to pending list : " + fontDefinition.fontIdentifier);
+		MyWebFonts.debug("loadFontDatas", "Adding Font Definition to pending list : " + fontDefinition.str());
 		MyWebFonts.pendingFontDefinitions.push(fontDefinition);
 
 		var scriptUrl = fontDefinition.createFontDatasUrl();
@@ -206,6 +209,7 @@ var MyWebFonts = {
 		if (fontFamily == null || fontFamily.empty())
 			return null;
 
+		// TODO Replace this code by a regexp
 		fonts = fontFamily.split(",");
 		if (fonts.length == 0) {
 			fonts = new Array();
@@ -281,9 +285,7 @@ var MyWebFonts = {
 			}
 			
 			// This element has been processed, it could be removed from list of found elements.
-			MyWebFonts.foundElements.splice(index, 1);
-			
-			index--;
+			MyWebFonts.foundElements.splice(index--, 1);
 
 		}
 	},
@@ -362,8 +364,20 @@ var MyWebFonts = {
 
 		var cssFontClass = new CssFontClass(datas["className"], datas["font-family"], datas["font-variant"], datas["font-size"], datas["color"]);
 
-		// TODO First Look if this css class name already exists, and replaces it
+		// If this CSS class name already exists, removes it 
+		for (var i=0; i < MyWebFonts.cssFontClasses.length; ++i) {
+			var current = MyWebFonts.cssFontClasses[i];
+			
+			if (cssFontClass.cssClassName == current.cssClassName) {
+				MyWebFonts.debug("addCssFontClass", "Remove previous version of MyWebFonts CSS class '" + current.cssClassName + "'");
+				MyWebFonts.cssFontClasses.splice(i, 1);
+				break;
+			}
+		}
+
 		MyWebFonts.cssFontClasses.push(cssFontClass);
+		
+		MyWebFonts.debug("addCssFontClass", "Content : " + MyWebFonts.cssFontClasses.length);
 		
 	},
 	
