@@ -24,6 +24,8 @@ var MyWebFonts = {
 		 * to your own server (no dependency anymore to My Web Fonts server).
 		 */
 		useOnlyFontPackages:	false
+		
+		// TODO Add an option to disable auto-loading
 	},
 	
 	// My Web Fonts Website
