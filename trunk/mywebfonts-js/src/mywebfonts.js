@@ -1,5 +1,5 @@
 /*
- * My Web Fonts JavaScript API, version 0.2-dev
+ * My Web Fonts JavaScript API, version 1.0-dev
  * January 26th, 2009
  * (c) 2009 Nicolas Ternisien <nicolas.ternisien@gmail.com>
  *
@@ -7,7 +7,7 @@
  * For details, see the My Web Fonts web site: http://www.mywebfonts.org/
  */
 var MyWebFonts = {
-	version: '0.2-dev',
+	version: '1.0-dev',
 
 	// My Web Fonts Configuration
 	options: {
