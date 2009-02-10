@@ -23,15 +23,14 @@ var MyWebFonts = {
 		 * This option is particularly useful when you want to entirely move font datas 
 		 * to your own server (no dependency anymore to My Web Fonts server).
 		 */
-		useOnlyFontPackages:	false
+		useOnlyFontPackages:	false,
 		
-		// TODO Add an option to disable auto-loading
+		// Set this to false if you want to manually control My Web Fonts startup, with MyWebFonts.initialize()
+		autoStartup:				true
 	},
 	
 	// My Web Fonts Website
-	// TODO Use real external site
-	// EXTERNAL_SITE: "http://www.mywebfonts.org",
-	EXTERNAL_SITE: "",
+	EXTERNAL_SITE: "http://datas.mywebfonts.org",
 
 	// CSS Font Size Constants
 	FONT_SIZE_CONSTANTS: { "xx-small": "8", "x-small": "10", "small": "12", "medium": "14", "large": "16", "x-large": "18", "xx-large": "20" },
@@ -773,6 +772,8 @@ document.observe("dom:loaded", function() {
 		myWebFontsAdditionalContent();
 	} catch(e) {}
 	
-	// Initialize MyWebFonts
-	MyWebFonts.initialize();
+	if (MyWebFonts.option.autoStartup == true) {
+		// Initialize MyWebFonts
+		MyWebFonts.initialize();
+	}
 });
