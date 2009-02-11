@@ -204,6 +204,8 @@ var MyWebFonts = {
 			return Math.round(4/3 * results[1]);
 		else if (results[2] == "em")
 			return Math.round(16 * results[1]);
+		else if (results[2] == "%")
+			return Math.round(16 * results[1] / 100);
 		
 		return null;
 	},
@@ -684,7 +686,7 @@ var RGBColor = Class.create({
 			cadetblue: '5f9ea0', chartreuse: '7fff00', chocolate: 'd2691e', coral: 'ff7f50', cornflowerblue: '6495ed', cornsilk: 'fff8dc', crimson: 'dc143c', cyan: '00ffff',
 			darkblue: '00008b', darkcyan: '008b8b', darkgoldenrod: 'b8860b', darkgray: 'a9a9a9', darkgreen: '006400', darkkhaki: 'bdb76b', darkmagenta: '8b008b', darkolivegreen: '556b2f', darkorange: 'ff8c00', darkorchid: '9932cc', darkred: '8b0000', darksalmon: 'e9967a', darkseagreen: '8fbc8f', darkslateblue: '483d8b', darkslategray: '2f4f4f', darkturquoise: '00ced1', darkviolet: '9400d3', deeppink: 'ff1493', deepskyblue: '00bfff', dimgray: '696969', dodgerblue: '1e90ff',
 			feldspar: 'd19275', firebrick: 'b22222', floralwhite: 'fffaf0', forestgreen: '228b22', fuchsia: 'ff00ff',
-			gainsboro: 'dcdcdc', ghostwhite: 'f8f8ff', gold: 'ffd700', goldenrod: 'daa520', gray: '808080', green: '008000', greenyellow: 'adff2f',
+			gainsboro: 'dcdcdc', ghostwhite: 'f8f8ff', gold: 'ffd700', goldenrod: 'daa520', grey: '808080', green: '008000', greenyellow: 'adff2f',
 			honeydew: 'f0fff0', hotpink: 'ff69b4',
 			indianred : 'cd5c5c', indigo : '4b0082', ivory: 'fffff0',
 			khaki: 'f0e68c',
@@ -777,19 +779,19 @@ var RGBColor = Class.create({
 
 document.observe("dom:loaded", function() {
 	// Pre-hook functions
-	for (var i = 0; i < hookFunctions.length; i++) {
-		var hookFunction = hookFunctions[i];
+	for (var i = 0; i < MyWebFonts.hookFunctions.length; i++) {
+		var hookFunction = MyWebFonts.hookFunctions[i];
 		if (hookFunction.event == "pre")
 			hookFunction.functionObj.call(null);
 	}
 	
-	if (MyWebFonts.option.autoStartup == true) {
+	if (MyWebFonts.options.autoStartup == true) {
 		// Initialize MyWebFonts
 		MyWebFonts.initialize();
 	
 		// Post-hook functions
-		for (var i = 0; i < hookFunctions.length; i++) {
-			var hookFunction = hookFunctions[i];
+		for (var i = 0; i < MyWebFonts.hookFunctions.length; i++) {
+			var hookFunction = MyWebFonts.hookFunctions[i];
 			if (hookFunction.event == "post")
 				hookFunction.functionObj.call(null);
 		}
