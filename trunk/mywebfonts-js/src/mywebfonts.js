@@ -46,6 +46,8 @@ var MyWebFonts = {
 	pendingFontDefinitions: 		[],
 	// CSS Font Classes
 	cssFontClasses:					[],
+	// Hook functions
+	hookFunctions:					[],
 
 	initialize: function() {
 		var domElements = $$("." + MyWebFonts.CSS_CLASS_NAME);
@@ -519,8 +521,15 @@ var MyWebFonts = {
 
 		}
 		
-	}
+	},
+	
+	addPreHook: function(functionName) {
+		MyWebFonts.hookFunctions.push( { event : "pre", functionObj : functionName } );
+	},
 
+	addPostHook: function(functionName) {
+		MyWebFonts.hookFunctions.push( { event : "post", functionObj : functionName } );
+	}
 	
 };
 
@@ -767,13 +776,23 @@ var RGBColor = Class.create({
 
 
 document.observe("dom:loaded", function() {
-	// Optional user additional content
-	try {
-		myWebFontsAdditionalContent();
-	} catch(e) {}
+	// Pre-hook functions
+	for (var i = 0; i < hookFunctions.length; i++) {
+		var hookFunction = hookFunctions[i];
+		if (hookFunction.event == "pre")
+			hookFunction.functionObj.call(null);
+	}
 	
 	if (MyWebFonts.option.autoStartup == true) {
 		// Initialize MyWebFonts
 		MyWebFonts.initialize();
+	
+		// Post-hook functions
+		for (var i = 0; i < hookFunctions.length; i++) {
+			var hookFunction = hookFunctions[i];
+			if (hookFunction.event == "post")
+				hookFunction.functionObj.call(null);
+		}
 	}
+
 });
