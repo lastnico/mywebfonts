@@ -15,7 +15,7 @@ var MyWebFonts = {
 		debug:				false,
 		
 		// Toggle the MyWebFonts Debug Log at loading
-		showDebugBlock:		false,
+		toggleDebugAtLoading:		false,
 		
 		/* 
 		 * Set this variable to true to be informed of which FontPackage you need to host 
@@ -25,7 +25,8 @@ var MyWebFonts = {
 		 */
 		useOnlyFontPackages:	false,
 		
-		// Set this to false if you want to manually control My Web Fonts startup, with MyWebFonts.initialize()
+		// Set this to false if you want to manually control My Web Fonts startup, 
+		// with MyWebFonts.initialize()
 		autoStartup:				true
 	},
 	
@@ -50,6 +51,13 @@ var MyWebFonts = {
 	hookFunctions:					[],
 
 	initialize: function() {
+		// Pre-hook functions
+		for (var i = 0; i < MyWebFonts.hookFunctions.length; i++) {
+			var hookFunction = MyWebFonts.hookFunctions[i];
+			if (hookFunction.event == "pre")
+				hookFunction.functionObj.call(null);
+		}
+
 		var domElements = $$("." + MyWebFonts.CSS_CLASS_NAME);
 		for (var index = 0; index < domElements.length; ++index) {
 			MyWebFonts.addFoundElement(domElements[index]);
@@ -293,6 +301,17 @@ var MyWebFonts = {
 			MyWebFonts.foundElements.splice(index--, 1);
 
 		}
+		
+		// All elements have been converted, Post-hook functions could be launched
+		if (MyWebFonts.foundElements.length == 0) {
+			for (var i = 0; i < MyWebFonts.hookFunctions.length; i++) {
+				var hookFunction = MyWebFonts.hookFunctions[i];
+				if (hookFunction.event == "post")
+					hookFunction.functionObj.call(null);
+			}
+
+		}
+		
 	},
 	
 	replaceText: function(element, font) {
@@ -471,7 +490,7 @@ var MyWebFonts = {
 			$$("body").last().appendChild(debugElement);
 			
 			// By default, debug block is built in "hidden" mode, so a toggle will enable it
-			if (MyWebFonts.options.showDebugBlock == true) {
+			if (MyWebFonts.options.toggleDebugAtLoading == true) {
 				MyWebFonts.toggleDebug(null); // Useless parameter
 			}
 		}
@@ -778,23 +797,8 @@ var RGBColor = Class.create({
 
 
 document.observe("dom:loaded", function() {
-	// Pre-hook functions
-	for (var i = 0; i < MyWebFonts.hookFunctions.length; i++) {
-		var hookFunction = MyWebFonts.hookFunctions[i];
-		if (hookFunction.event == "pre")
-			hookFunction.functionObj.call(null);
-	}
-	
 	if (MyWebFonts.options.autoStartup == true) {
 		// Initialize MyWebFonts
 		MyWebFonts.initialize();
-	
-		// Post-hook functions
-		for (var i = 0; i < MyWebFonts.hookFunctions.length; i++) {
-			var hookFunction = MyWebFonts.hookFunctions[i];
-			if (hookFunction.event == "post")
-				hookFunction.functionObj.call(null);
-		}
 	}
-
 });
